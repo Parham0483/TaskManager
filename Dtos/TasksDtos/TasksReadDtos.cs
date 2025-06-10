@@ -1,6 +1,6 @@
 namespace TaskManager.Dtos
 {
-    public class TaskReadDto
+    public class TasksReadDto
     {
         public int Id { get; set; }
         public string Status { get; set; } = string.Empty;  

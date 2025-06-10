@@ -14,7 +14,11 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+builder.Services
+    .AddControllers()
+    .AddNewtonsoftJson(); 
 
+builder.Services.AddAutoMapper(typeof(Program));
 
 
 var app = builder.Build();

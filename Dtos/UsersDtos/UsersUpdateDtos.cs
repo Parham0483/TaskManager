@@ -1,6 +1,6 @@
 namespace TaskManager.Dtos
 {
-    public class UpdateUsersDto
+    public class UsersUpdateDto
     {
         public string? Name { get; set; }
         public string? PhoneNo { get; set; }

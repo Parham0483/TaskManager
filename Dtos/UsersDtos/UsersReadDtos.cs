@@ -1,7 +1,7 @@
 namespace TaskManager.Dtos
 {
 
-    public class UserReadDto
+    public class UsersReadDto
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;

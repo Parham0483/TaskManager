@@ -1,6 +1,6 @@
 namespace TaskManager.Dtos
 {
-    public class UpdateTaskDto
+    public class TasksUpdateDto
     {
         public string? Status { get; set; } 
         public string? Asignee { get; set; } 
