@@ -10,5 +10,6 @@ namespace TaskManager.Services
         void CreateUser(User user);
         void UpdateUser(User user);
         void DeleteUser(int id);
+        void PatchUser(int id, User user);
     }
 }
