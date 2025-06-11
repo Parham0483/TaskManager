@@ -7,7 +7,7 @@ using TaskManager.Services;
 
 namespace TaskManager.Controllers
 {
-    [Route("api/[user]")]
+    [Route("api/users")] 
     [ApiController]
     public class UsersController : ControllerBase
     {
