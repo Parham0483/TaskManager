@@ -31,6 +31,7 @@ namespace TaskManager.Services
         {
             if (user == null) throw new ArgumentNullException(nameof(user));
             _context.Users.Add(user);
+            SaveChanges();
         }
 
         public void UpdateUser(User user)
@@ -44,6 +45,7 @@ namespace TaskManager.Services
             if (user != null)
             {
                 _context.Users.Remove(user);
+                SaveChanges();
             }
         }
 

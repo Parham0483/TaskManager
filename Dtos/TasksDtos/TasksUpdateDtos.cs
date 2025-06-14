@@ -1,9 +1,11 @@
+using TaskManager.Models;
+
 namespace TaskManager.Dtos
 {
     public class TasksUpdateDto
     {
-        public string? Status { get; set; } 
-        public string? Asignee { get; set; } 
+        public Models.TaskStatus? Status { get; set; }
+        public int? AssigneeId { get; set; }
         public DateTime? HandedIn { get; set; } 
     }
 }

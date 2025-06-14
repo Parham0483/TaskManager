@@ -9,8 +9,15 @@ namespace TaskManager.Models
     {
         public int Id { get; set; }
         public TaskStatus Status { get; set; } = TaskStatus.Todo;
-        public string Asignee { get; set; }
+
+     
+        public int AssigneeId { get; set; } //FK
+        public User Assignee { get; set; }
+     
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime HandedIn { get; set; } = DateTime.UtcNow;
+
+    
     }
 }

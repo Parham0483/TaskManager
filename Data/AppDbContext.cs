@@ -10,7 +10,13 @@ namespace TaskManager.Data
 
         public DbSet<User> Users { get; set; }
         public DbSet<Tasks> Tasks { get; set; }
-    
-    
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Tasks>()
+            .HasOne(t => t.Assignee)
+                .WithMany(u => u.AssignedTasks)
+                .HasForeignKey(t => t.AssigneeId);
+        }
 }
 }

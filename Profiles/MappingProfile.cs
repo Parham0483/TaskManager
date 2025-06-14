@@ -14,7 +14,8 @@ namespace TaskManager.Profiles
             CreateMap<UsersUpdateDto, User>();
 
             // Task mappings
-            CreateMap<Tasks, TasksReadDto>();
+            CreateMap<Tasks, TasksReadDto>()
+            .ForMember(dest => dest.AssigneeName, opt => opt.MapFrom(src => src.Assignee.Name));
             CreateMap<TasksCreateDto, Tasks>();
             CreateMap<TasksUpdateDto, Tasks>();
         }

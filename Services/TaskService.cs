@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using TaskManager.Data;
 using TaskManager.Models;
 
@@ -11,7 +12,7 @@ namespace TaskManager.Services
         {
             _context = context;
         }
-         public void CreateTask(Tasks task)
+        public void CreateTask(Tasks task)
         {
             if (task == null)
             {
@@ -53,12 +54,12 @@ namespace TaskManager.Services
 
             // Update properties as needed
             existingTask.Status = task.Status;
-            existingTask.Asignee = task.Asignee;
+            existingTask.AssigneeId = task.AssigneeId;
             existingTask.HandedIn = task.HandedIn;
 
             SaveChanges();
         }
-         public void DeleteTask(int id)
+        public void DeleteTask(int id)
         {
             if (id <= 0)
             {
@@ -69,12 +70,14 @@ namespace TaskManager.Services
         }
         public IEnumerable<Tasks> GetAllTasks()
         {
-            return _context.Tasks.ToList();
+            return _context.Tasks.Include(t => t.Assignee).ToList();
         }
 
         public Tasks GetTaskById(int id)
         {
-            return _context.Tasks.FirstOrDefault(t => t.Id == id);
+            return _context.Tasks
+            .Include(t => t.Assignee)
+                .FirstOrDefault(t => t.Id == id);
         }
 
         public IEnumerable<Tasks> GetTasksByDateCreated(DateTime date)
@@ -101,9 +104,10 @@ namespace TaskManager.Services
         public IEnumerable<Tasks> GetTasksByUserId(int userId)
         {
             return _context.Tasks
-                .Where(t => t.Asignee == userId.ToString())
-                .ToList();
+            .Include(t => t.Assignee)
+            .Where(t => t.Assignee != null && t.Assignee.Id == userId)
+            .ToList();    
         }
-       
+
     }
 }
