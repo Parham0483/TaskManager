@@ -11,5 +11,7 @@ namespace TaskManager.Services
         void UpdateUser(User user);
         void DeleteUser(int id);
         void PatchUser(int id, User user);
+        User? Login(string phoneNo, string password);
+
     }
 }

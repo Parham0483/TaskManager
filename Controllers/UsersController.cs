@@ -5,9 +5,10 @@ using TaskManager.Models;
 using TaskManager.Dtos;
 using TaskManager.Services;
 
+
 namespace TaskManager.Controllers
 {
-    [Route("api/users")] 
+    [Route("api/users")]
     [ApiController]
     public class UsersController : ControllerBase
     {
@@ -105,6 +106,20 @@ namespace TaskManager.Controllers
             _userService.SaveChanges();
 
             return NoContent();
+        }
+
+        [HttpPost("login")]
+        public ActionResult<UsersReadDto> Login([FromBody] LoginDto loginDto)
+        {
+            if (loginDto == null || string.IsNullOrEmpty(loginDto.PhoneNo) || string.IsNullOrEmpty(loginDto.Password))
+                return BadRequest("Phone number and password are required.");
+
+            var user = _userService.Login(loginDto.PhoneNo, loginDto.Password);
+            if (user == null)
+                return Unauthorized("Invalid phone number or password.");
+
+            var userReadDto = _mapper.Map<UsersReadDto>(user);
+            return Ok(userReadDto);
         }
     }
 }

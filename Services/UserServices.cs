@@ -1,5 +1,6 @@
 using TaskManager.Data;
 using TaskManager.Models;
+using BCrypt.Net;
 
 namespace TaskManager.Services
 {
@@ -30,6 +31,7 @@ namespace TaskManager.Services
         public void CreateUser(User user)
         {
             if (user == null) throw new ArgumentNullException(nameof(user));
+            user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
             _context.Users.Add(user);
             SaveChanges();
         }
@@ -65,6 +67,16 @@ namespace TaskManager.Services
             existingUser.Role = user.Role;
 
             SaveChanges();
+        }
+
+        public User? Login(string phoneNo, string password)
+        {
+            var user = _context.Users.FirstOrDefault(u => u.PhoneNo == phoneNo);
+            if (user != null && BCrypt.Net.BCrypt.Verify(password, user.Password))
+            {
+                return user;
+            }
+            return null; // Return null if login fails
         }
     }
 }
