@@ -55,8 +55,23 @@ namespace TaskManager.Services
             // Update properties as needed
             existingTask.Status = task.Status;
             existingTask.AssigneeId = task.AssigneeId;
-            existingTask.HandedIn = task.HandedIn;
 
+            if (!string.IsNullOrWhiteSpace(task.Title))
+            {
+                existingTask.Title = task.Title;
+            }
+            if (!string.IsNullOrWhiteSpace(task.Description))
+            {
+                existingTask.Description = task.Description;
+            }
+            if (task.Status == Models.TaskStatus.Done && existingTask.HandedIn == default)
+            {
+                existingTask.HandedIn = DateTime.UtcNow; // Set HandedIn date if task is marked as Done and not already set
+            }
+            else if (task.Status != Models.TaskStatus.Done)
+            {
+                existingTask.HandedIn = default; // Reset HandedIn date if task is not Done
+            }
             SaveChanges();
         }
         public void DeleteTask(int id)

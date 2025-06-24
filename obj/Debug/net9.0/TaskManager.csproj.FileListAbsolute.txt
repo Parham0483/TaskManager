@@ -133,3 +133,7 @@
 /Users/parhamgolmohammadi/TaskManager/obj/Debug/net9.0/TaskManager.pdb
 /Users/parhamgolmohammadi/TaskManager/obj/Debug/net9.0/TaskManager.genruntimeconfig.cache
 /Users/parhamgolmohammadi/TaskManager/obj/Debug/net9.0/ref/TaskManager.dll
+/Users/parhamgolmohammadi/TaskManager/bin/Debug/net9.0/my-taskmanager-frontend/package-lock.json
+/Users/parhamgolmohammadi/TaskManager/bin/Debug/net9.0/my-taskmanager-frontend/package.json
+/Users/parhamgolmohammadi/TaskManager/bin/Debug/net9.0/my-taskmanager-frontend/public/manifest.json
+/Users/parhamgolmohammadi/TaskManager/bin/Debug/net9.0/BCrypt.Net-Next.dll
