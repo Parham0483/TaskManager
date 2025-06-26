@@ -13,18 +13,18 @@ namespace TaskManager.Profiles
             CreateMap<UsersCreateDto, User>();
             CreateMap<UsersUpdateDto, User>();
 
-            // Task -> TaskReadDto
-            CreateMap<Tasks, TasksReadDto>()
-                .ForMember(dest => dest.AssigneeName, opt => opt.MapFrom(src => src.Assignee.Name))
-                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()));
+            // Task -> TasksReadDto
+        CreateMap<Tasks, TasksReadDto>()
+            .ForMember(dest => dest.AssigneeName, opt => opt.MapFrom(src => src.Assignee.Name))
+            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()));
 
-            // TaskCreateDto -> Task
-            CreateMap<TasksCreateDto, Tasks>()
-                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => Enum.Parse<Models.TaskStatus>(src.Status.ToString())));
+        // TasksCreateDto -> Tasks (string -> enum)
+        CreateMap<TasksCreateDto, Tasks>()
+            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => Enum.Parse<Models.TaskStatus>(src.Status, true)));
 
-            // TaskUpdateDto -> Task
-            CreateMap<TasksUpdateDto, Tasks>()
-                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => Enum.Parse<Models.TaskStatus>(src.Status.ToString())));
+        // TasksUpdateDto -> Tasks (string -> enum)
+        CreateMap<TasksUpdateDto, Tasks>()
+            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => Enum.Parse<Models.TaskStatus>(src.Status, true)));
         }
     }
 }

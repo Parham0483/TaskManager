@@ -3,8 +3,8 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import TaskList from './pages/TaskList';
 import UserList from './pages/UserList';
-import TaskDetail from './pages/TaskDetail';
-import TaskForm from './pages/TaskForm';
+import TaskDetail from './components/TaskDetail';
+import TaskForm from './components/TaskForm';
 
 
 function App() {

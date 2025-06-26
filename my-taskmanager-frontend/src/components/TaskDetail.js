@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 
-function TaskDetail() {
-  const { id } = useParams();
+function TaskDetail({id, onComplete}) {
   const navigate = useNavigate();
 
   const [task, setTask] = useState(null);
@@ -49,7 +48,7 @@ function TaskDetail() {
         assigneeId: parseInt(assigneeId),
       });
       alert('Task updated successfully.');
-      navigate('/tasks');
+      if (onComplete) onComplete(); 
     } catch (err) {
       console.error('Error updating task:', err);
       alert('Failed to update task.');
@@ -60,9 +59,10 @@ function TaskDetail() {
     try {
       await api.delete(`/tasks/${id}`);
       alert('Task deleted.');
-      navigate('/tasks');
+      if (onComplete) onComplete();
     } catch (err) {
-      console.error('Error deleting task:', err);
+      console.log('Attempting to delete task with ID:', id);
+      console.error('Error deleting task:', err.response?.data || err.message);
       alert('Failed to delete task.');
     }
   };
@@ -73,6 +73,11 @@ function TaskDetail() {
     <div className="task-detail-container">
       <h2>Task #{task.id}</h2>
 
+      {onComplete && (
+      <button onClick={onComplete} className="close-button">
+       Close
+      </button>
+       )}
       <div className="task-field">
         <label>Title:</label>
         <p>{task.title || 'No title provided.'}</p>

@@ -1,15 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 
-function TaskForm() {
+function TaskForm({ onComplete }) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState('Todo');
   const [assigneeId, setAssigneeId] = useState('');
   const [users, setUsers] = useState([]);
-
-  const navigate = useNavigate();
 
   useEffect(() => {
     fetchUsers();
@@ -42,7 +39,9 @@ function TaskForm() {
 
       await api.post('/tasks', newTask);
       alert('Task created successfully!');
-      navigate('/tasks');
+      
+      // ✅ Call onComplete to close form and reload tasks
+      if (onComplete) onComplete();
     } catch (error) {
       console.error('Error creating task:', error);
       alert('Task creation failed. Please try again.');

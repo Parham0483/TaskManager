@@ -6,17 +6,23 @@ namespace TaskManager.Services
 {
     public class TaskService : ITaskService
     {
-
         private readonly AppDbContext _context;
+
         public TaskService(AppDbContext context)
         {
             _context = context;
         }
+
         public void CreateTask(Tasks task)
         {
             if (task == null)
             {
                 throw new ArgumentNullException(nameof(task));
+            }
+
+            if (!Enum.IsDefined(typeof(Models.TaskStatus), task.Status))
+            {
+                throw new ArgumentException("Invalid TaskStatus value.");
             }
 
             _context.Tasks.Add(task);
@@ -35,6 +41,11 @@ namespace TaskManager.Services
                 throw new ArgumentNullException(nameof(task));
             }
 
+            if (!Enum.IsDefined(typeof(Models.TaskStatus), task.Status))
+            {
+                throw new ArgumentException("Invalid TaskStatus value.");
+            }
+
             _context.Tasks.Update(task);
             SaveChanges();
         }
@@ -46,13 +57,17 @@ namespace TaskManager.Services
                 throw new ArgumentNullException(nameof(task));
             }
 
+            if (!Enum.IsDefined(typeof(Models.TaskStatus), task.Status))
+            {
+                throw new ArgumentException("Invalid TaskStatus value.");
+            }
+
             var existingTask = GetTaskById(id);
             if (existingTask == null)
             {
                 throw new KeyNotFoundException($"Task with ID {id} not found.");
             }
 
-            // Update properties as needed
             existingTask.Status = task.Status;
             existingTask.AssigneeId = task.AssigneeId;
 
@@ -64,25 +79,36 @@ namespace TaskManager.Services
             {
                 existingTask.Description = task.Description;
             }
+
             if (task.Status == Models.TaskStatus.Done && existingTask.HandedIn == default)
             {
-                existingTask.HandedIn = DateTime.UtcNow; // Set HandedIn date if task is marked as Done and not already set
+                existingTask.HandedIn = DateTime.UtcNow;
             }
             else if (task.Status != Models.TaskStatus.Done)
             {
-                existingTask.HandedIn = default; // Reset HandedIn date if task is not Done
+                existingTask.HandedIn = default;
             }
+
             SaveChanges();
         }
+
         public void DeleteTask(int id)
         {
             if (id <= 0)
             {
                 throw new ArgumentException("Invalid task ID", nameof(id));
             }
-            _context.Tasks.Remove(new Tasks { Id = id });
+
+            var task = _context.Tasks.FirstOrDefault(t => t.Id == id);
+            if (task == null)
+            {
+                throw new InvalidOperationException("Task not found.");
+            }
+
+            _context.Tasks.Remove(task);
             SaveChanges();
         }
+
         public IEnumerable<Tasks> GetAllTasks()
         {
             return _context.Tasks.Include(t => t.Assignee).ToList();
@@ -91,7 +117,7 @@ namespace TaskManager.Services
         public Tasks GetTaskById(int id)
         {
             return _context.Tasks
-            .Include(t => t.Assignee)
+                .Include(t => t.Assignee)
                 .FirstOrDefault(t => t.Id == id);
         }
 
@@ -119,10 +145,9 @@ namespace TaskManager.Services
         public IEnumerable<Tasks> GetTasksByUserId(int userId)
         {
             return _context.Tasks
-            .Include(t => t.Assignee)
-            .Where(t => t.Assignee != null && t.Assignee.Id == userId)
-            .ToList();    
+                .Include(t => t.Assignee)
+                .Where(t => t.Assignee != null && t.Assignee.Id == userId)
+                .ToList();
         }
-
     }
 }
