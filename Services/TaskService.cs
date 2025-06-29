@@ -102,7 +102,7 @@ namespace TaskManager.Services
             var task = _context.Tasks.FirstOrDefault(t => t.Id == id);
             if (task == null)
             {
-                throw new InvalidOperationException("Task not found.");
+                return;
             }
 
             _context.Tasks.Remove(task);
@@ -149,5 +149,19 @@ namespace TaskManager.Services
                 .Where(t => t.Assignee != null && t.Assignee.Id == userId)
                 .ToList();
         }
+
+        public IEnumerable<Tasks> GetAllTasksForUser(int userId, bool isAdmin)
+        {
+            if (isAdmin)
+            {
+                return _context.Tasks.Include(t => t.Assignee).ToList();
+            }
+
+            return _context.Tasks
+                .Include(t => t.Assignee)
+                .Where(t => t.AssigneeId == userId)
+                .ToList();
+        }
+
     }
 }

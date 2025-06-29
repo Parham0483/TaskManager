@@ -23,7 +23,7 @@ namespace TaskManager.Services
             return _context.Users.ToList();
         }
 
-        public User GetUserById(int id)
+        public User? GetUserById(int id)
         {
             return _context.Users.FirstOrDefault(u => u.Id == id);
         }
@@ -31,6 +31,7 @@ namespace TaskManager.Services
         public void CreateUser(User user)
         {
             if (user == null) throw new ArgumentNullException(nameof(user));
+
             user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
             _context.Users.Add(user);
             SaveChanges();
@@ -38,7 +39,7 @@ namespace TaskManager.Services
 
         public void UpdateUser(User user)
         {
-            // No implementation needed as EF Core tracks changes automatically
+            // EF Core automatically tracks changes
         }
 
         public void DeleteUser(int id)
@@ -57,11 +58,8 @@ namespace TaskManager.Services
 
             var existingUser = GetUserById(id);
             if (existingUser == null)
-            {
                 throw new KeyNotFoundException($"User with ID {id} not found.");
-            }
 
-            // Update properties as needed
             existingUser.Name = user.Name;
             existingUser.PhoneNo = user.PhoneNo;
             existingUser.Role = user.Role;
@@ -72,11 +70,14 @@ namespace TaskManager.Services
         public User? Login(string phoneNo, string password)
         {
             var user = _context.Users.FirstOrDefault(u => u.PhoneNo == phoneNo);
-            if (user != null && BCrypt.Net.BCrypt.Verify(password, user.Password))
-            {
-                return user;
-            }
-            return null; // Return null if login fails
+            return user != null && BCrypt.Net.BCrypt.Verify(password, user.Password)
+                ? user
+                : null;
+        }
+
+        public User? Authenticate(string phoneNo, string password)
+        {
+            return Login(phoneNo, password);
         }
     }
 }

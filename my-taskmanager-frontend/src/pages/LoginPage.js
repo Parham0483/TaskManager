@@ -1,35 +1,36 @@
-import {useState} from 'react';
-import {useNavigate} from 'react-router-dom';
-import { Link } from 'react-router-dom';
-import api from "../api/axios"; 
-function LoginPage() { 
-    const[phoneNo, setPhoneNo] = useState('');
-    const[password, setPassword] = useState('');
+import { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import api from "../api/axios";
+
+function LoginPage() {
+    const [phoneNo, setPhoneNo] = useState('');
+    const [password, setPassword] = useState('');
     const navigate = useNavigate();
 
     const handleLogin = async (e) => {
         e.preventDefault();
         try {
-            const response = await api.post('users/login', {
-                phoneNo,
-                password
-            });
-            
-            const user = response.data;
-            // Store user data in localStorage
-            localStorage.setItem('user', JSON.stringify(user));
+            const response = await api.post('users/login', { phoneNo, password });
+            const { token, ...userData } = response.data;
 
-            if (user.role === 'admin') {
-                navigate('/users'); // Redirect to user list for admin
+            if (token) {
+                localStorage.setItem('token', token);
+                localStorage.setItem('user', JSON.stringify(userData));
+
+            } else {
+                throw new Error('No token received from server.');
             }
-            else {
-                navigate('/tasks'); // Redirect to task list for regular users
+
+            if (userData.role === 'admin') {
+                navigate('/users');
+            } else {
+                navigate('/tasks');
             }
-    } catch (error) {
-            console.error('Login failed:', error);
+        } catch (error) {
             alert('Login failed. Please check your credentials.');
         }
     };
+
     return (
         <div className="login-container">
             <h2>Login</h2>
@@ -56,12 +57,11 @@ function LoginPage() {
                 </div>
                 <button type="submit">Login</button>
                 <p style={{ marginTop: '10px' }}>
-                 Don't have an account? <Link to="/register">Register here</Link>
+                    Don't have an account? <Link to="/register">Register here</Link>
                 </p>
             </form>
         </div>
     );
-
 }
 
 export default LoginPage;

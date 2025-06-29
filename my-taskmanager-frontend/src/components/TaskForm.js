@@ -6,41 +6,40 @@ function TaskForm({ onComplete }) {
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState('Todo');
   const [assigneeId, setAssigneeId] = useState('');
-  const [users, setUsers] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
-    fetchUsers();
-    const currentUser = JSON.parse(localStorage.getItem('user'));
-    if (currentUser?.id) {
-      setAssigneeId(currentUser.id);
+    // Get current user and set as the only assignee option
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (user?.userId) {
+      setCurrentUser(user);
+      setAssigneeId(user.userId.toString());
+    } else {
+      console.error('No current user found');
     }
   }, []);
 
-  const fetchUsers = async () => {
-    try {
-      const response = await api.get('/users');
-      setUsers(response.data);
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      alert('Failed to load users. Please try again.');
-    }
-  };
-
   const handleCreateTask = async (e) => {
     e.preventDefault();
+
+    // Ensure we have a current user
+    if (!currentUser?.userId) {
+      alert('Unable to create task: User not found');
+      return;
+    }
 
     try {
       const newTask = {
         title,
         description,
         status,
-        assigneeId: parseInt(assigneeId),
+        assigneeId: parseInt(currentUser.userId), // Always use current user's ID
       };
 
       await api.post('/tasks', newTask);
       alert('Task created successfully!');
-      
-      // ✅ Call onComplete to close form and reload tasks
+
+      // Call onComplete to close form and reload tasks
       if (onComplete) onComplete();
     } catch (error) {
       console.error('Error creating task:', error);
@@ -49,7 +48,7 @@ function TaskForm({ onComplete }) {
   };
 
   return (
-    <form onSubmit={handleCreateTask} className="task-form">
+    <form onSubmit={handleCreateTask}>
       <h2>Create New Task</h2>
 
       <div className="form-group">
@@ -85,22 +84,20 @@ function TaskForm({ onComplete }) {
 
       <div className="form-group">
         <label>Assignee:</label>
-        <select
-          value={assigneeId}
-          onChange={e => setAssigneeId(e.target.value)}
-          required
-        >
-          <option value="">Select a user</option>
-          {users.length > 0 ? (
-            users.map(user => (
-              <option key={user.id} value={user.id}>
-                {user.name}
-              </option>
-            ))
-          ) : (
-            <option disabled>Loading users...</option>
-          )}
-        </select>
+        <input
+          type="text"
+          value={currentUser?.userName || 'Loading...'}
+          readOnly
+          style={{
+            backgroundColor: '#f5f5f5',
+            cursor: 'not-allowed',
+            border: '1px solid #ddd',
+            padding: '8px'
+          }}
+        />
+        <small style={{ color: '#666', display: 'block', marginTop: '4px' }}>
+          Tasks can only be assigned to yourself
+        </small>
       </div>
 
       <button type="submit">Create Task</button>

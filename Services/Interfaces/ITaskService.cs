@@ -12,6 +12,8 @@ namespace TaskManager.Services
         IEnumerable<Tasks> GetTasksByStatus(Models.TaskStatus status);
         IEnumerable<Tasks> GetTasksByDateCreated(DateTime date);
         IEnumerable<Tasks> GetTasksByDateHandedIn(DateTime date);
+        IEnumerable<Tasks> GetAllTasksForUser(int userId, bool isAdmin);
+
         void CreateTask(Tasks task);
         void UpdateTask(Tasks task);
         void DeleteTask(int id);

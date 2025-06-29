@@ -12,6 +12,7 @@ namespace TaskManager.Services
         void DeleteUser(int id);
         void PatchUser(int id, User user);
         User? Login(string phoneNo, string password);
+        User Authenticate(string phoneNo, string password);
 
     }
 }

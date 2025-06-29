@@ -1,13 +1,15 @@
-using Microsoft.AspNetCore.Mvc;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
-using TaskManager.Models;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using TaskManager.Dtos;
+using TaskManager.Models;
 using TaskManager.Services;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace TaskManager.Controllers
 {
+    [Authorize]
     [Route("api/tasks")]
     [ApiController]
     public class TaskController : ControllerBase
@@ -24,18 +26,32 @@ namespace TaskManager.Controllers
         [HttpGet]
         public ActionResult<IEnumerable<TasksReadDto>> GetAllTasks()
         {
-            var tasks = _taskService.GetAllTasks();
-            return Ok(_mapper.Map<IEnumerable<TasksReadDto>>(tasks));
-        }
+            try
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var userRoleClaim = User.FindFirst(ClaimTypes.Role)?.Value;
 
-        [HttpGet("{id}")]
-        public ActionResult<TasksReadDto> GetTaskById(int id)
-        {
-            var task = _taskService.GetTaskById(id);
-            if (task == null)
-                return NotFound();
+                if (string.IsNullOrEmpty(userIdClaim))
+                    return BadRequest("Invalid token claims - missing user ID");
 
-            return Ok(_mapper.Map<TasksReadDto>(task));
+                if (string.IsNullOrEmpty(userRoleClaim))
+                    return BadRequest("Invalid token claims - missing user role");
+
+                if (!int.TryParse(userIdClaim, out int userId))
+                    return BadRequest("Invalid token claims - user ID not valid");
+
+                bool isAdmin = userRoleClaim.Equals("admin", StringComparison.OrdinalIgnoreCase);
+
+                var tasks = isAdmin
+                    ? _taskService.GetAllTasks()
+                    : _taskService.GetTasksByUserId(userId);
+
+                return Ok(_mapper.Map<IEnumerable<TasksReadDto>>(tasks));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal Server Error: {ex.Message}");
+            }
         }
 
         [HttpPost]
@@ -45,60 +61,61 @@ namespace TaskManager.Controllers
             _taskService.CreateTask(taskModel);
 
             var taskReadDto = _mapper.Map<TasksReadDto>(taskModel);
-
             return CreatedAtAction(nameof(GetTaskById), new { id = taskReadDto.Id }, taskReadDto);
         }
 
-        [HttpPut("{id}")]
-        public ActionResult UpdateTask(int id, TasksUpdateDto taskUpdateDto)
+        [HttpGet("{id}")]
+        public ActionResult<TasksReadDto> GetTaskById(int id)
         {
-            var existingTask = _taskService.GetTaskById(id);
-            if (existingTask == null)
-                return NotFound();
+            var task = _taskService.GetTaskById(id);
+            if (task == null) return NotFound();
 
-            _mapper.Map(taskUpdateDto, existingTask);
+            return Ok(_mapper.Map<TasksReadDto>(task));
+        }
 
-            _taskService.UpdateTask(existingTask);
+        [HttpPut("{id}")]
+        public IActionResult UpdateTask(int id, TasksUpdateDto taskUpdateDto)
+        {
+            var task = _taskService.GetTaskById(id);
+            if (task == null) return NotFound();
+
+            _mapper.Map(taskUpdateDto, task);
+            _taskService.UpdateTask(task);
 
             return NoContent();
         }
 
         [HttpPatch("{id}")]
-        public ActionResult PatchTask(int id, JsonPatchDocument<TasksUpdateDto> patchDoc)
+        public IActionResult PatchTask(int id, JsonPatchDocument<TasksUpdateDto> patchDoc)
         {
-            if (patchDoc == null)
-                return BadRequest();
+            if (patchDoc == null) return BadRequest();
 
-            var existingTask = _taskService.GetTaskById(id);
-            if (existingTask == null)
-                return NotFound();
+            var task = _taskService.GetTaskById(id);
+            if (task == null) return NotFound();
 
-            var taskToPatch = _mapper.Map<TasksUpdateDto>(existingTask);
+            var taskToPatch = _mapper.Map<TasksUpdateDto>(task);
             patchDoc.ApplyTo(taskToPatch, ModelState);
 
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            _mapper.Map(taskToPatch, existingTask);
-
-            _taskService.UpdateTask(existingTask);
+            _mapper.Map(taskToPatch, task);
+            _taskService.UpdateTask(task);
 
             return NoContent();
         }
 
         [HttpDelete("{id}")]
-        public ActionResult DeleteTask(int id)
+        public IActionResult DeleteTask(int id)
         {
-            var existingTask = _taskService.GetTaskById(id);
-            if (existingTask == null)
-                return NotFound();
+            var task = _taskService.GetTaskById(id);
+            if (task == null) return NotFound();
 
             _taskService.DeleteTask(id);
-
             return NoContent();
         }
 
         [HttpGet("user/{userId}")]
+        [Authorize(Roles = "admin")] // Only admin should be able to query other users' tasks
         public ActionResult<IEnumerable<TasksReadDto>> GetTasksByUserId(int userId)
         {
             var tasks = _taskService.GetTasksByUserId(userId);
@@ -106,7 +123,7 @@ namespace TaskManager.Controllers
         }
 
         [HttpGet("status/{status}")]
-        public ActionResult<IEnumerable<TasksReadDto>> GetTasksByStatus(TaskManager.Models.TaskStatus status)
+        public ActionResult<IEnumerable<TasksReadDto>> GetTasksByStatus(Models.TaskStatus status)
         {
             var tasks = _taskService.GetTasksByStatus(status);
             return Ok(_mapper.Map<IEnumerable<TasksReadDto>>(tasks));

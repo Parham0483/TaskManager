@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.JsonPatch;
 using TaskManager.Models;
 using TaskManager.Dtos;
 using TaskManager.Services;
-
+using System;
 
 namespace TaskManager.Controllers
 {
@@ -14,11 +14,13 @@ namespace TaskManager.Controllers
     {
         private readonly IUserService _userService;
         private readonly IMapper _mapper;
+        private readonly ITokenService _tokenService;
 
-        public UsersController(IUserService userService, IMapper mapper)
+        public UsersController(IUserService userService, IMapper mapper, ITokenService tokenService)
         {
             _userService = userService;
             _mapper = mapper;
+            _tokenService = tokenService;
         }
 
         // GET: api/users
@@ -26,8 +28,8 @@ namespace TaskManager.Controllers
         public ActionResult<IEnumerable<UsersReadDto>> GetAllUsers()
         {
             var users = _userService.GetAllUsers();
-            var usersReadDto = _mapper.Map<IEnumerable<UsersReadDto>>(users);
-            return Ok(usersReadDto);
+            var usersDto = _mapper.Map<IEnumerable<UsersReadDto>>(users);
+            return Ok(usersDto);
         }
 
         // GET: api/users/{id}
@@ -35,33 +37,31 @@ namespace TaskManager.Controllers
         public ActionResult<UsersReadDto> GetUserById(int id)
         {
             var user = _userService.GetUserById(id);
-            if (user == null)
-                return NotFound();
+            if (user == null) return NotFound();
 
-            var userReadDto = _mapper.Map<UsersReadDto>(user);
-            return Ok(userReadDto);
+            var userDto = _mapper.Map<UsersReadDto>(user);
+            return Ok(userDto);
         }
 
         // POST: api/users
         [HttpPost]
         public ActionResult<UsersReadDto> CreateUser(UsersCreateDto userCreateDto)
         {
-            var userModel = _mapper.Map<User>(userCreateDto);
-            _userService.CreateUser(userModel);
+
+            var user = _mapper.Map<User>(userCreateDto);
+            _userService.CreateUser(user);
             _userService.SaveChanges();
 
-            var userReadDto = _mapper.Map<UsersReadDto>(userModel);
-
-            return CreatedAtAction(nameof(GetUserById), new { id = userModel.Id }, userReadDto);
+            var userDto = _mapper.Map<UsersReadDto>(user);
+            return CreatedAtAction(nameof(GetUserById), new { id = user.Id }, userDto);
         }
 
         // PUT: api/users/{id}
         [HttpPut("{id}")]
-        public ActionResult UpdateUser(int id, UsersUpdateDto userUpdateDto)
+        public IActionResult UpdateUser(int id, UsersUpdateDto userUpdateDto)
         {
             var existingUser = _userService.GetUserById(id);
-            if (existingUser == null)
-                return NotFound();
+            if (existingUser == null) return NotFound();
 
             _mapper.Map(userUpdateDto, existingUser);
             _userService.UpdateUser(existingUser);
@@ -72,20 +72,17 @@ namespace TaskManager.Controllers
 
         // PATCH: api/users/{id}
         [HttpPatch("{id}")]
-        public ActionResult PatchUser(int id, JsonPatchDocument<UsersUpdateDto> patchDoc)
+        public IActionResult PatchUser(int id, JsonPatchDocument<UsersUpdateDto> patchDoc)
         {
-            if (patchDoc == null)
-                return BadRequest();
+            if (patchDoc == null) return BadRequest();
 
             var existingUser = _userService.GetUserById(id);
-            if (existingUser == null)
-                return NotFound();
+            if (existingUser == null) return NotFound();
 
             var userToPatch = _mapper.Map<UsersUpdateDto>(existingUser);
             patchDoc.ApplyTo(userToPatch, ModelState);
 
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            if (!ModelState.IsValid) return BadRequest(ModelState);
 
             _mapper.Map(userToPatch, existingUser);
             _userService.UpdateUser(existingUser);
@@ -96,11 +93,10 @@ namespace TaskManager.Controllers
 
         // DELETE: api/users/{id}
         [HttpDelete("{id}")]
-        public ActionResult DeleteUser(int id)
+        public IActionResult DeleteUser(int id)
         {
-            var existingUser = _userService.GetUserById(id);
-            if (existingUser == null)
-                return NotFound();
+            var user = _userService.GetUserById(id);
+            if (user == null) return NotFound();
 
             _userService.DeleteUser(id);
             _userService.SaveChanges();
@@ -108,18 +104,32 @@ namespace TaskManager.Controllers
             return NoContent();
         }
 
+
+        // POST: api/users/login
         [HttpPost("login")]
-        public ActionResult<UsersReadDto> Login([FromBody] LoginDto loginDto)
+        public IActionResult Login(LoginDto loginDto)
         {
-            if (loginDto == null || string.IsNullOrEmpty(loginDto.PhoneNo) || string.IsNullOrEmpty(loginDto.Password))
-                return BadRequest("Phone number and password are required.");
+            if (loginDto == null || string.IsNullOrWhiteSpace(loginDto.PhoneNo) || string.IsNullOrWhiteSpace(loginDto.Password))
+            {
+                return BadRequest(new { message = "Phone number and password must be provided." });
+            }
 
             var user = _userService.Login(loginDto.PhoneNo, loginDto.Password);
             if (user == null)
-                return Unauthorized("Invalid phone number or password.");
+            {
+                // Either user not found or password mismatch
+                return Unauthorized(new { message = "Invalid phone number or password." });
+            }
 
-            var userReadDto = _mapper.Map<UsersReadDto>(user);
-            return Ok(userReadDto);
+            var token = _tokenService.CreateToken(user);
+
+            return Ok(new
+            {
+                token,
+                userId = user.Id,
+                userName = user.Name,
+                expiration = DateTime.UtcNow.AddHours(3),
+            });
         }
     }
 }
